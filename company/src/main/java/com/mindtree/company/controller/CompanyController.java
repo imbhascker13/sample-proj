@@ -19,7 +19,7 @@ import com.mindtree.company.service.CompanyService;
 @Controller
 public class CompanyController {
 	
-	public static int eid;
+	final static int eid;
 	
 	@Autowired
 	CompanyService companyservice;
