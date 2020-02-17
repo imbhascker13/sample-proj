@@ -4,7 +4,7 @@ node {
 
      
   stage('Git-Checkout') {
-  sh 'rm -rf comp'
+ 
   sh 'https://github.com/imbhascker13/comp.git'
   }
     
