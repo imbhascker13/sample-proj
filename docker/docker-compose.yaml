@@ -1,0 +1,8 @@
+version: '2'
+
+
+services:
+  bike-brands:
+    build: . 
+    ports:
+      - '8083:8080'
