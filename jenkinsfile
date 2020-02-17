@@ -1,0 +1,86 @@
+node {
+ try  {
+ notify('Job Started') 
+
+     
+  stage('Git-Checkout') {
+  sh 'rm -rf comp'
+  sh 'https://github.com/imbhascker13/comp.git'
+  }
+    
+ def project_path="comp/company/"
+ 
+ dir(project_path) {
+    
+  stage('Maven-Clean') {
+   sh label: '', script: 'mvn clean'
+  }
+    
+ stage('Maven-Compile') {
+   sh label: '', script: 'mvn compile'
+  }
+  
+   stage('Maven-Test') {
+   sh label: '', script: 'mvn test'
+  }
+  
+
+   stage('sonar') {
+        withSonarQubeEnv('Sonarqube'){
+            sh "mvn sonar:sonar"
+        }
+    }
+  
+   stage('Maven-Package') {
+   sh label: '', script: 'mvn package'
+  }
+  
+    stage('Archive-Artifacts') {
+   archiveArtifacts 'target/*.war'
+  }  
+  
+      stage('Jfrog Artifacory'){
+        def server= Artifactory.server 'Artifactory'
+            def uploadSpec= """{
+                "files": [{
+                "pattern": "target/*.war",
+                "target": "comp"}]
+            }"""
+            server.upload(uploadSpec)
+    }
+  
+  
+}
+   def docker_path="comp/docker/"
+ dir(docker_path) {
+    stage('Download from Jfrog'){
+        def server= Artifactory.server 'Artifactory'
+            def downloadSpec = """{
+                "files": [{
+                "pattern": "comp/*.war",
+                "target": "jfrogdownload/" }]
+            }"""
+        server.download(downloadSpec)
+   }
+     stage('Docker-Stage-Deployment') {
+   sh label: '', script: 'docker-compose up -d --build'
+  }
+   }
+   
+   notify('Job Completed')   
+} catch (err) {
+  notify("Error ${err}")
+  currentBuild.result = 'FAILURE'
+}
+}
+
+
+
+def notify(status){
+    emailext (
+	to: "bhaskarreddygbr7@.gmail.com",
+	subject: "${status}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+	 body: """<p>${status}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</p>
+	<p>Check console output at <a href='${env.BUILD_URL}'>${env.JOB_NAME} [${env.BUILD_NUMBER}]</a></p>""",
+		)
+	}
