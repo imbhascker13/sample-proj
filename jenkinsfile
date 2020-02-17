@@ -44,7 +44,7 @@ node {
             def uploadSpec= """{
                 "files": [{
                 "pattern": "target/*.war",
-                "target": "comp"}]
+                "target": "petc"}]
             }"""
             server.upload(uploadSpec)
     }
@@ -57,7 +57,7 @@ node {
         def server= Artifactory.server 'Artifactory'
             def downloadSpec = """{
                 "files": [{
-                "pattern": "comp/*.war",
+                "pattern": "petc/*.war",
                 "target": "jfrogdown/" }]
             }"""
         server.download(downloadSpec)
