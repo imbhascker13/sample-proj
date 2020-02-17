@@ -4,8 +4,8 @@ node {
 
      
   stage('Git-Checkout') {
- 
-  sh 'https://github.com/imbhascker13/comp.git'
+ sh 'rm -rf comp'
+  sh 'git clone https://github.com/imbhascker13/comp.git'
   }
     
  def project_path="comp/company/"
