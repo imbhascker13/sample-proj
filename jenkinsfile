@@ -58,7 +58,7 @@ node {
             def downloadSpec = """{
                 "files": [{
                 "pattern": "comp/*.war",
-                "target": "jfrogdownload/" }]
+                "target": "jfrogdown/" }]
             }"""
         server.download(downloadSpec)
    }
