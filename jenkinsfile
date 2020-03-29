@@ -25,11 +25,11 @@ node {
   }
   
 
-   stage('sonar') {
+/*   stage('sonar') {
         withSonarQubeEnv('Sonarqube'){
             sh "mvn sonar:sonar"
         }
-    }
+    }            */
    
    stage('Maven-Package') {
    sh label: '', script: 'mvn package'
@@ -62,10 +62,10 @@ node {
             }"""
         server.download(downloadSpec)
    }
-     stage('Docker-Stage-Deployment') {
+/*     stage('Docker-Stage-Deployment') {
    sh label: '', script: 'docker-compose up -d --build'
   }
-   }
+   }     */
    
    notify('Job Completed')   
 } catch (err) {
