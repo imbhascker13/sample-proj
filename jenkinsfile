@@ -1,6 +1,6 @@
 node {
  try  {
- notify('Job Started') 
+/* notify('Job Started') */
 
      
   stage('Git-Checkout') {
