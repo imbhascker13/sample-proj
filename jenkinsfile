@@ -57,7 +57,7 @@ pipeline
       
      stage('Building image') {
 	 steps {
-     dir("company/")
+     dir("docker/")
      {
         script {
             name=STAGE_NAME
