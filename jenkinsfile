@@ -1,66 +1,113 @@
-node {
- try  {
+def name
+pipeline
+{
+ environment {
+    registry = "iambhascker13/mydocker"
+    registryCredential = 'dockerhub'
+    dockerImage=''
+  }   
+  agent any
+  stages
+  {
+      stage('Git checkout stage')
+      {
+         
+          steps
+          {
+              script {
+               name=STAGE_NAME
+               git 'https://github.com/imbhascker13/sample-proj.git'
+          } }
+      }
+      stage('maven clean old packages stage')
+      { 
+           
+          steps
+          {
+              script {
+              name=STAGE_NAME
+			   dir("company/"){
+              sh 'mvn clean'
+          } } }
+      }
      
-  stage('Git-Checkout') {
- sh 'rm -rf comp'
-  sh 'git clone https://github.com/imbhascker13/comp.git'
-  }
-    
- def project_path="comp/company/"
- 
- dir(project_path) {
-    
-  stage('Maven-Clean') {
-   sh label: '', script: 'mvn clean'
-  }
-    
- stage('Maven-Compile') {
-   sh label: '', script: 'mvn compile'
-  }
-  
-   stage('Maven-Test') {
-   sh label: '', script: 'mvn test'
-  }
-   
-   stage('Maven-Package') {
-   sh label: '', script: 'mvn package'
-  }
-  
-    stage('Archive-Artifacts') {
-   archiveArtifacts 'target/*.war'
-  }  
-  
-      stage('Jfrog Artifacory'){
-        def server= Artifactory.server 'Artifactory'
-            def uploadSpec= """{
-                "files": [{
-                "pattern": "target/*.war",
-                "target": "comp"}]
-            }"""
-            server.upload(uploadSpec)
+      
+      stage('maven compile stage')
+      { 
+          steps
+          {
+             
+               dir("company/"){
+                   script { 
+                       name=STAGE_NAME
+              sh 'mvn compile'
+          } } }
+      }
+      stage('Stage:Generating war file for the project')
+      { 
+          steps
+          {
+        
+              dir("company/"){
+                  script {
+                      name=STAGE_NAME
+              sh 'mvn install'
+          } } }
+      }
+      
+     stage('Building image') {
+	 steps {
+     dir("company/")
+     {
+        script {
+            name=STAGE_NAME
+          dockerImage = docker.build registry + ":$BUILD_NUMBER"
+        }
+     }
+	 }
     }
-  
-  
-}
-   def docker_path="comp/docker/"
- dir(docker_path) {
-    stage('Download from Jfrog'){
-        def server= Artifactory.server 'Artifactory'
-            def downloadSpec = """{
-                "files": [{
-                "pattern": "comp/*.war",
-                "target": "jfrogdown/" }]
-            }"""
-        server.download(downloadSpec)
-   }
-
-   }     
-   
-} catch (err) {
-  notify("Error ${err}")
-  currentBuild.result = 'FAILURE'
-}
-
+    stage('Deploy Image') {
+	steps {
+         script {
+             name=STAGE_NAME
+            docker.withRegistry( '', registryCredential ) {
+            dockerImage.push()
+          }
+      }
+	  }
+    }
+     stage('Run container')
+    {
+	steps {
+                script {
+                    name=STAGE_NAME
+                sh "docker run -d -it -p 8086:8080 --name company_container -v /var/lib/tomcat8/conf/tomcat-users.xml:/usr/local/tomcat/conf/tomcat-users.xml -v /var/lib/tomcat8/conf/context.xml:/usr/local/tomcat/webapps/manager/META-INF/context.xml iambhascker13/mydocker:$BUILD_NUMBER "
+            } }
+    }
+  }
+post
+    {
+        success
+    {
+      mail bcc: '',
+	 body: "Success", 
+	 cc: '', 
+	 from: '',
+	 replyTo: '',
+	 subject: "Success pipeline ${currentBuild.fullDisplayName}",
+	 to: 'bhaskarreddygbr7@gmail.com'  
+    }
+    failure
+    {
+         mail bcc: '',
+	 body: "Something is wrong with ${name}", 
+	 cc: '', 
+	 from: '',
+	 replyTo: '',
+	 subject: "Failure pipeline ${currentBuild.fullDisplayName}",
+	 to: 'bhaskarreddygbr7@gmail.com'  
+    }
+    }
 }
 
 
